@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Testing: Spot the Difference</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideInDown 1s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: -1px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+            border-radius: 2px;
+        }
+
+        .header p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.1),
+                0 2px 8px rgba(0,0,0,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.15),
+                0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .game-panels {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 
+                0 25px 70px rgba(0,0,0,0.12),
+                0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 35px 90px rgba(0,0,0,0.15),
+                0 15px 40px rgba(102, 126, 234, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .found-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .found-indicator.found {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .ui-mockup {
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: crosshair;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            box-shadow: 
+                inset 0 1px 3px rgba(0,0,0,0.1),
+                0 1px 8px rgba(0,0,0,0.05);
+        }
+
+        .ui-mockup:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: 
+                inset 0 1px 3px rgba(0,0,0,0.1),
+                0 4px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Mockup UI Components */
+        .mockup-header {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mockup-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+
+        .mockup-nav {
+            display: flex;
+            gap: 25px;
+        }
+
+        .mockup-nav-item {
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .mockup-nav-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .mockup-content {
+            padding: 30px;
+        }
+
+        .mockup-hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .mockup-hero h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #1f2937;
+            line-height: 1.2;
+        }
+
+        .mockup-hero p {
+            font-size: 1.1rem;
+            color: #6b7280;
+            max-width: 500px;
+            margin: 0 auto 25px;
+            line-height: 1.6;
+        }
+
+        .mockup-button {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .mockup-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .mockup-button:hover {
+            background: linear-gradient(135deg, #d97706, #92400e);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+
+        .mockup-button:hover::before {
+            left: 100%;
+        }
+
+        .mockup-button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .mockup-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 30px rgba(0,0,0,0.06),
+                0 1px 8px rgba(0,0,0,0.03);
+            border: 1px solid rgba(102, 126, 234, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.12),
+                0 8px 30px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: 
+                0 8px 25px rgba(102, 126, 234, 0.3),
+                0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.6s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: rotate(5deg) scale(1.1);
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.4),
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-card:hover .feature-icon::before {
+            width: 120%;
+            height: 120%;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+
+        .feature-description {
+            color: #6b7280;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        /* Difference highlighting */
+        .difference-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #ff4757;
+            border-radius: 50%;
+            background: rgba(255, 71, 87, 0.2);
+            animation: pulse 1.5s infinite;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+        }
+
+        .click-effect {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            background: rgba(76, 175, 80, 0.2);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            animation: click-ripple 0.6s ease-out forwards;
+            z-index: 101;
+        }
+
+        @keyframes click-ripple {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.1),
+                0 3px 10px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.15),
+                0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .control-btn:hover::before {
+            left: 100%;
+        }
+
+        .control-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 
+                0 8px 25px rgba(102, 126, 234, 0.3),
+                0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .control-btn.primary:hover {
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.4),
+                0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .control-btn.success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 
+                0 8px 25px rgba(76, 175, 80, 0.3),
+                0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .control-btn.success:hover {
+            box-shadow: 
+                0 15px 35px rgba(76, 175, 80, 0.4),
+                0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .hint-btn {
+            background: linear-gradient(135deg, #ffa502, #ff6348);
+            color: white;
+            box-shadow: 
+                0 8px 25px rgba(255, 165, 2, 0.3),
+                0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .hint-btn:hover {
+            box-shadow: 
+                0 15px 35px rgba(255, 165, 2, 0.4),
+                0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn:disabled:hover {
+            transform: none;
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.1),
+                0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: left 0.5s ease;
+        }
+
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .difficulty-btn:hover::before {
+            left: 100%;
+        }
+
+        .difficulty-btn.active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+            color: #667eea;
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 25px rgba(255, 255, 255, 0.3),
+                0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .completion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .modal-stat {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .modal-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal-stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Specific differences for each difficulty */
+        .diff-easy { }
+        .diff-medium { }
+        .diff-hard { }
+
+        /* Visual feedback for wrong clicks */
+        .wrong-click {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ff4757;
+            border-radius: 50%;
+            background: rgba(255, 71, 87, 0.2);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            animation: wrong-shake 0.6s ease-out forwards;
+            z-index: 101;
+        }
+
+        @keyframes wrong-shake {
+            0%, 20%, 40%, 60%, 80% { transform: translate(-50%, -50%) translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) translateX(-10px); }
+            15%, 35%, 55%, 75%, 85% { transform: translate(-50%, -50%) translateX(10px); }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+        .timer {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .timer.warning {
+            color: #ff4757;
+            animation: timer-pulse 1s infinite;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .hint-btn {
+            background: #ffa502;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049, #66bb6a);
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .completion-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: none; /* toggled by .show */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .completion-modal.show {
+            display: flex;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to   { opacity: 1; backdrop-filter: blur(8px); }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #fff, #f8fafc);
+            padding: 50px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 550px;
+            margin: 20px;
+            box-shadow:
+                0 30px 80px rgba(0,0,0,0.3),
+                0 15px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            animation: rotate 4s linear infinite;
+        }
+
+        .modal-content > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* You were cut here — finishing the keyframes */
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to   { transform: translateY(0);   opacity: 1; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Optional close button */
+        .modal-close {
+            position: absolute;
+            top: 12px; right: 12px;
+            background: rgba(0,0,0,0.06);
+            border: none;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 36px;
+            color: #334155;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .modal-close:hover { transform: scale(1.05); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+
+        /* Motion safety */
+        @media (prefers-reduced-motion: reduce) {
+            .completion-modal { animation: none; }
+            .modal-content { animation: none; }
+            .modal-content::before { animation: none; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>UI Testing: Spot the Difference</h1>
+            <p>Test your visual acuity by identifying subtle differences in UI elements. Perfect training for quality assurance and design review processes.</p>
+        </div>
+
+        <div class="difficulty-selector">
+            <div class="difficulty-btn active" data-difficulty="easy">Easy (3 differences)</div>
+            <div class="difficulty-btn" data-difficulty="medium">Medium (5 differences)</div>
+            <div class="difficulty-btn" data-difficulty="hard">Hard (7 differences)</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <div class="game-stats">
+            <div class="stat-card">
+                <div class="stat-value timer" id="timer">03:00</div>
+                <div class="stat-label">Time Remaining</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="found-count">0</div>
+                <div class="stat-label">Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-count">3</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="hints-used">0</div>
+                <div class="stat-label">Hints Used</div>
+            </div>
+        </div>
+
+        <div class="game-panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Original Design</div>
+                    <div class="found-indicators" id="left-indicators"></div>
+                </div>
+                <div class="ui-mockup" id="left-panel">
+                    <div class="mockup-header">
+                        <div class="mockup-logo">DesignPro</div>
+                        <div class="mockup-nav">
+                            <div class="mockup-nav-item">Home</div>
+                            <div class="mockup-nav-item">Products</div>
+                            <div class="mockup-nav-item">About</div>
+                            <div class="mockup-nav-item">Contact</div>
+                        </div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="mockup-hero">
+                            <h2 id="left-hero-title">Create Amazing Designs</h2>
+                            <p id="left-hero-text">Professional design tools for modern creators. Build stunning interfaces with our comprehensive suite of design utilities.</p>
+                            <button class="mockup-button" id="left-cta">Get Started Today</button>
+                        </div>
+                        <div class="mockup-features">
+                            <div class="feature-card">
+                                <div class="feature-icon">🎨</div>
+                                <div class="feature-title" id="left-feature1-title">Design Tools</div>
+                                <div class="feature-description" id="left-feature1-desc">Advanced vector graphics and layout tools for professional design work.</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">⚡</div>
+                                <div class="feature-title" id="left-feature2-title">Fast Performance</div>
+                                <div class="feature-description" id="left-feature2-desc">Lightning-fast rendering and real-time collaboration features.</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🔧</div>
+                                <div class="feature-title" id="left-feature3-title">Easy Integration</div>
+                                <div class="feature-description" id="left-feature3-desc">Seamlessly integrate with your existing workflow and tools.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Modified Design</div>
+                    <div class="found-indicators" id="right-indicators"></div>
+                </div>
+                <div class="ui-mockup" id="right-panel">
+                    <div class="mockup-header">
+                        <div class="mockup-logo">DesignPro</div>
+                        <div class="mockup-nav">
+                            <div class="mockup-nav-item">Home</div>
+                            <div class="mockup-nav-item">Products</div>
+                            <div class="mockup-nav-item">About</div>
+                            <div class="mockup-nav-item">Contact</div>
+                        </div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="mockup-hero">
+                            <h2 id="right-hero-title">Create Amazing Designs</h2>
+                            <p id="right-hero-text">Professional design tools for modern creators. Build stunning interfaces with our comprehensive suite of design utilities.</p>
+                            <button class="mockup-button" id="right-cta">Get Started Today</button>
+                        </div>
+                        <div class="mockup-features">
+                            <div class="feature-card">
+                                <div class="feature-icon">🎨</div>
+                                <div class="feature-title" id="right-feature1-title">Design Tools</div>
+                                <div class="feature-description" id="right-feature1-desc">Advanced vector graphics and layout tools for professional design work.</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">⚡</div>
+                                <div class="feature-title" id="right-feature2-title">Fast Performance</div>
+                                <div class="feature-description" id="right-feature2-desc">Lightning-fast rendering and real-time collaboration features.</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🔧</div>
+                                <div class="feature-title" id="right-feature3-title">Easy Integration</div>
+                                <div class="feature-description" id="right-feature3-desc">Seamlessly integrate with your existing workflow and tools.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="new-game-btn">New Game</button>
+            <button class="control-btn hint-btn" id="hint-btn">Hint (3 remaining)</button>
+            <button class="control-btn" id="reveal-btn">Reveal All</button>
+            <button class="control-btn success" id="check-solution">Check Solution</button>
+        </div>
+    </div>
+
+    <div class="completion-modal" id="completion-modal">
+        <div class="modal-content">
+            <div class="modal-title">🎉 Congratulations!</div>
+            <p>You successfully found all the differences!</p>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="final-time">02:45</div>
+                    <div class="modal-stat-label">Completion Time</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="final-accuracy">87%</div>
+                    <div class="modal-stat-label">Accuracy Rate</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="final-difficulty">Medium</div>
+                    <div class="modal-stat-label">Difficulty Level</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="final-hints">1</div>
+                    <div class="modal-stat-label">Hints Used</div>
+                </div>
+            </div>
+            <button class="control-btn primary" onclick="startNewGame()">Play Again</button>
+            <button class="control-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        class SpotTheDifferenceGame {
+            constructor() {
+                this.currentDifficulty = 'easy';
+                this.differences = [];
+                this.foundDifferences = new Set();
+                this.totalClicks = 0;
+                this.wrongClicks = 0;
+                this.hintsRemaining = 3;
+                this.hintsUsed = 0;
+                this.gameStartTime = null;
+                this.timeLimit = 180; // 3 minutes
+                this.gameTimer = null;
+                this.timeRemaining = this.timeLimit;
+                
+                this.difficultySettings = {
+                    easy: { count: 3, timeLimit: 180 },
+                    medium: { count: 5, timeLimit: 240 },
+                    hard: { count: 7, timeLimit: 300 }
+                };
+
+                this.initializeGame();
+                this.bindEvents();
+            }
+
+            initializeGame() {
+                this.generateDifferences();
+                this.updateUI();
+                this.startTimer();
+            }
+
+            generateDifferences() {
+                const settings = this.difficultySettings[this.currentDifficulty];
+                this.differences = [];
+                this.foundDifferences.clear();
+                this.timeLimit = settings.timeLimit;
+                this.timeRemaining = this.timeLimit;
+
+                // Define possible differences based on difficulty
+                const possibleDifferences = [
+                    {
+                        type: 'text',
+                        element: '#right-hero-title',
+                        change: () => document.querySelector('#right-hero-title').textContent = 'Create Stunning Designs',
+                        area: { x: 50, y: 25, width: 300, height: 40 }
+                    },
+                    {
+                        type: 'color',
+                        element: '#right-cta',
+                        change: () => document.querySelector('#right-cta').style.background = '#e11d48',
+                        area: { x: 45, y: 35, width: 150, height: 30 }
+                    },
+                    {
+                        type: 'font-size',
+                        element: '#right-feature1-title',
+                        change: () => document.querySelector('#right-feature1-title').style.fontSize = '1.4rem',
+                        area: { x: 25, y: 60, width: 200, height: 25 }
+                    },
+                    {
+                        type: 'padding',
+                        element: '#right-feature2-desc',
+                        change: () => document.querySelector('#right-feature2-desc').style.padding = '10px 0',
+                        area: { x: 50, y: 70, width: 200, height: 30 }
+                    },
+                    {
+                        type: 'text',
+                        element: '#right-feature3-title',
+                        change: () => document.querySelector('#right-feature3-title').textContent = 'Simple Integration',
+                        area: { x: 75, y: 60, width: 200, height: 25 }
+                    },
+                    {
+                        type: 'color',
+                        element: '#right-hero-text',
+                        change: () => document.querySelector('#right-hero-text').style.color = '#374151',
+                        area: { x: 20, y: 30, width: 400, height: 25 }
+                    },
+                    {
+                        type: 'border',
+                        element: '.feature-card:nth-child(2)',
+                        change: () => document.querySelector('#right-panel .feature-card:nth-child(2)').style.border = '2px solid #667eea',
+                        area: { x: 50, y: 65, width: 200, height: 100 }
+                    }
+                ];
+
+                // Select random differences based on difficulty
+                const shuffled = possibleDifferences.sort(() => 0.5 - Math.random());
+                this.differences = shuffled.slice(0, settings.count);
+
+                // Apply the changes
+                this.differences.forEach((diff, index) => {
+                    diff.change();
+                    diff.id = index;
+                });
+
+                document.getElementById('total-count').textContent = settings.count;
+            }
+
+            bindEvents() {
+                // Difficulty selection
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentDifficulty = e.target.dataset.difficulty;
+                        this.startNewGame();
+                    });
+                });
+
+                // Panel clicks
+                document.getElementById('right-panel').addEventListener('click', (e) => {
+                    this.handlePanelClick(e);
+                });
+
+                // Control buttons
+                document.getElementById('new-game-btn').addEventListener('click', () => this.startNewGame());
+                document.getElementById('hint-btn').addEventListener('click', () => this.showHint());
+                document.getElementById('reveal-btn').addEventListener('click', () => this.revealAll());
+                document.getElementById('check-solution').addEventListener('click', () => this.checkSolution());
+
+                // Modal close
+                document.getElementById('completion-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'completion-modal') this.closeModal();
+                });
+            }
+
+            handlePanelClick(e) {
+                if (this.gameTimer === null) return;
+
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+                this.totalClicks++;
+                
+                let foundDifference = false;
+                
+                this.differences.forEach((diff, index) => {
+                    if (this.foundDifferences.has(index)) return;
+                    
+                    const area = diff.area;
+                    if (x >= area.x && x <= (area.x + area.width) &&
+                        y >= area.y && y <= (area.y + area.height)) {
+                        this.markDifferenceFound(index, e.clientX, e.clientY);
+                        foundDifference = true;
+                    }
+                });
+
+                if (!foundDifference) {
+                    this.showWrongClick(e.clientX, e.clientY);
+                    this.wrongClicks++;
+                }
+
+                this.updateUI();
+                this.checkGameCompletion();
+            }
+
+            markDifferenceFound(index, clientX, clientY) {
+                this.foundDifferences.add(index);
+                
+                // Show success effect
+                const effect = document.createElement('div');
+                effect.className = 'click-effect';
+                effect.style.left = clientX + 'px';
+                effect.style.top = clientY + 'px';
+                effect.style.position = 'fixed';
+                document.body.appendChild(effect);
+                
+                setTimeout(() => effect.remove(), 600);
+                
+                // Add permanent marker
+                const marker = document.createElement('div');
+                marker.className = 'difference-marker';
+                const area = this.differences[index].area;
+                marker.style.left = (area.x + area.width/2) + '%';
+                marker.style.top = (area.y + area.height/2) + '%';
+                document.getElementById('right-panel').appendChild(marker);
+            }
+
+            showWrongClick(clientX, clientY) {
+                const effect = document.createElement('div');
+                effect.className = 'wrong-click';
+                effect.style.left = clientX + 'px';
+                effect.style.top = clientY + 'px';
+                effect.style.position = 'fixed';
+                document.body.appendChild(effect);
+                
+                setTimeout(() => effect.remove(), 600);
+            }
+
+            showHint() {
+                if (this.hintsRemaining <= 0) return;
+                
+                this.hintsRemaining--;
+                this.hintsUsed++;
+                
+                // Find first unfound difference
+                const unfoundIndex = this.differences.findIndex((_, index) => !this.foundDifferences.has(index));
+                
+                if (unfoundIndex !== -1) {
+                    const area = this.differences[unfoundIndex].area;
+                    const hint = document.createElement('div');
+                    hint.className = 'difference-marker';
+                    hint.style.left = (area.x + area.width/2) + '%';
+                    hint.style.top = (area.y + area.height/2) + '%';
+                    hint.style.border = '3px solid #ffa502';
+                    hint.style.background = 'rgba(255, 165, 2, 0.3)';
+                    document.getElementById('right-panel').appendChild(hint);
+                    
+                    setTimeout(() => hint.remove(), 3000);
+                }
+                
+                this.updateUI();
+            }
+
+            revealAll() {
+                this.differences.forEach((diff, index) => {
+                    if (!this.foundDifferences.has(index)) {
+                        const area = diff.area;
+                        const marker = document.createElement('div');
+                        marker.className = 'difference-marker';
+                        marker.style.left = (area.x + area.width/2) + '%';
+                        marker.style.top = (area.y + area.height/2) + '%';
+                        marker.style.border = '3px solid #ff6b6b';
+                        marker.style.background = 'rgba(255, 107, 107, 0.3)';
+                        document.getElementById('right-panel').appendChild(marker);
+                        
+                        this.foundDifferences.add(index);
+                    }
+                });
+                
+                this.endGame();
+            }
+
+            checkSolution() {
+                if (this.foundDifferences.size === this.differences.length) {
+                    this.endGame();
+                } else {
+                    alert(`You've found ${this.foundDifferences.size} out of ${this.differences.length} differences. Keep looking!`);
+                }
+            }
+
+            startTimer() {
+                this.gameStartTime = Date.now();
+                this.gameTimer = setInterval(() => {
+                    this.timeRemaining--;
+                    this.updateTimer();
+                    
+                    if (this.timeRemaining <= 0) {
+                        this.endGame(true);
+                    }
+                }, 1000);
+            }
+
+            updateTimer() {
+                const minutes = Math.floor(this.timeRemaining / 60);
+                const seconds = this.timeRemaining % 60;
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const timerElement = document.getElementById('timer');
+                timerElement.textContent = timeString;
+                
+                if (this.timeRemaining <= 30) {
+                    timerElement.classList.add('warning');
+                } else {
+                    timerElement.classList.remove('warning');
+                }
+            }
+
+            updateUI() {
+                document.getElementById('found-count').textContent = this.foundDifferences.size;
+                
+                const accuracy = this.totalClicks > 0 ? Math.round((this.foundDifferences.size / this.totalClicks) * 100) : 100;
+                document.getElementById('accuracy').textContent = accuracy + '%';
+                
+                document.getElementById('hints-used').textContent = this.hintsUsed;
+                document.getElementById('hint-btn').textContent = `Hint (${this.hintsRemaining} remaining)`;
+                document.getElementById('hint-btn').disabled = this.hintsRemaining <= 0;
+                
+                // Update progress bar
+                const progress = (this.foundDifferences.size / this.differences.length) * 100;
+                document.querySelector('.progress-fill').style.width = progress + '%';
+                
+                // Update indicators
+                this.updateIndicators();
+            }
+
+            updateIndicators() {
+                const leftIndicators = document.getElementById('left-indicators');
+                const rightIndicators = document.getElementById('right-indicators');
+                
+                leftIndicators.innerHTML = '';
+                rightIndicators.innerHTML = '';
+                
+                for (let i = 0; i < this.differences.length; i++) {
+                    const leftIndicator = document.createElement('div');
+                    const rightIndicator = document.createElement('div');
+                    
+                    leftIndicator.className = 'found-indicator';
+                    rightIndicator.className = 'found-indicator';
+                    
+                    if (this.foundDifferences.has(i)) {
+                        leftIndicator.classList.add('found');
+                        rightIndicator.classList.add('found');
+                    }
+                    
+                    leftIndicators.appendChild(leftIndicator);
+                    rightIndicators.appendChild(rightIndicator);
+                }
+            }
+
+            checkGameCompletion() {
+                if (this.foundDifferences.size === this.differences.length) {
+                    setTimeout(() => this.endGame(), 500);
+                }
+            }
+
+            endGame(timeUp = false) {
+                if (this.gameTimer) {
+                    clearInterval(this.gameTimer);
+                    this.gameTimer = null;
+                }
+                
+                const completionTime = this.timeLimit - this.timeRemaining;
+                const accuracy = this.totalClicks > 0 ? Math.round((this.foundDifferences.size / this.totalClicks) * 100) : 100;
+                
+                if (timeUp) {
+                    alert('Time\'s up! Game over.');
+                    return;
+                }
+                
+                // Show completion modal
+                document.getElementById('final-time').textContent = this.formatTime(completionTime);
+                document.getElementById('final-accuracy').textContent = accuracy + '%';
+                document.getElementById('final-difficulty').textContent = this.currentDifficulty.charAt(0).toUpperCase() + this.currentDifficulty.slice(1);
+                document.getElementById('final-hints').textContent = this.hintsUsed;
+                
+                document.getElementById('completion-modal').style.display = 'flex';
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            startNewGame() {
+                // Clear existing markers
+                document.querySelectorAll('.difference-marker').forEach(marker => marker.remove());
+                
+                // Reset game state
+                this.foundDifferences.clear();
+                this.totalClicks = 0;
+                this.wrongClicks = 0;
+                this.hintsUsed = 0;
+                this.hintsRemaining = 3;
+                
+                if (this.gameTimer) {
+                    clearInterval(this.gameTimer);
+                }
+                
+                // Reset UI elements to original state
+                this.resetUIElements();
+                
+                // Generate new differences and start
+                this.generateDifferences();
+                this.updateUI();
+                this.startTimer();
+                
+                // Close modal if open
+                this.closeModal();
+            }
+
+            resetUIElements() {
+                // Reset all modified elements to original state
+                document.querySelector('#right-hero-title').textContent = 'Create Amazing Designs';
+                document.querySelector('#right-cta').style.background = '#f59e0b';
+                document.querySelector('#right-feature1-title').style.fontSize = '1.2rem';
+                document.querySelector('#right-feature2-desc').style.padding = '';
+                document.querySelector('#right-feature3-title').textContent = 'Easy Integration';
+                document.querySelector('#right-hero-text').style.color = '#6b7280';
+                
+                const featureCard = document.querySelector('#right-panel .feature-card:nth-child(2)');
+                if (featureCard) {
+                    featureCard.style.border = '1px solid #f0f0f0';
+                }
+            }
+
+            closeModal() {
+                document.getElementById('completion-modal').style.display = 'none';
+            }
+        }
+
+        // Global functions for modal buttons
+        function startNewGame() {
+            game.startNewGame();
+        }
+
+        function closeModal() {
+            game.closeModal();
+        }
+
+        // Initialize the game when DOM is loaded
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            game = new SpotTheDifferenceGame();
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'n':
+                case 'N':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        game.startNewGame();
+                    }
+                    break;
+                case 'h':
+                case 'H':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        game.showHint();
+                    }
+                    break;
+                case 'r':
+                case 'R':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        game.revealAll();
+                    }
+                    break;
+                case 'Escape':
+                    game.closeModal();
+                    break;
+            }
+        });
+
+        // Add mobile touch improvements
+        if ('ontouchstart' in window) {
+            document.getElementById('right-panel').style.cursor = 'pointer';
+            
+            // Prevent zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        // Add visual feedback for successful operations
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#4CAF50' : '#ff4757'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => {
+                    toast.remove();
+                    style.remove();
+                }, 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
